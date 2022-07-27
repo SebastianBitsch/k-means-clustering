@@ -1,4 +1,5 @@
 from copy import copy
+from xml.sax.handler import all_properties
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,35 +17,34 @@ class Clustering:
             self.points = self.__random_points(N)
 
         self.N = len(self.points)        
-        self.classes = np.zeros(self.N)
+        self.classes = np.zeros(self.N, dtype=int)
         self.n_clusters = n_clusters
         self.centroids = np.random.rand(n_clusters, 2)
-        self.__configure_plot()
+        self.prev_centroids = np.array([copy(self.centroids)])
         
 
     def __random_points(self, N:int) -> np.ndarray:
         return np.random.rand(N, 2)
 
-    def __configure_plot(self, figsize:tuple=(7, 7)):
-        self.fig, self.ax = plt.subplots(figsize=figsize)
-        self.ax.set_xlim([0,1])
-        self.ax.set_ylim([0,1])
-
-
-    def __plot_points(self, ax, p, c=None, marker='+'):
-        if c:
-            ax.scatter(x=p[:,0], y=p[:,1], c=c, marker=marker)
-        else:
-            ax.scatter(x=p[:,0], y=p[:,1], c='black', marker=marker)
+    def __plot_points(self, ax:plt.Axes, p:list, c='black', marker:str='+', opacity:float=1):
+        ax.scatter(x=p[:,0], y=p[:,1], c=c, marker=marker, alpha=opacity)
+        
         
 
-    def __plot_step(self):
-        # self.ax.clear()
-        self.__plot_points(self.ax, self.points, marker='+')
-        self.__plot_points(self.ax, self.centroids, range(self.n_clusters), marker='o')
+    def __plot_step(self, figsize:tuple = (8,8)):
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.set_xlim([0,1])
+        ax.set_ylim([0,1])
+        
+        # Plot points and cluster centers
+        self.__plot_points(ax=ax, p=self.points, c=colors[self.classes], marker='+')
+        
+        # Plot the trail of cluster centers with decreasing opacity
+        for i, c in enumerate(self.prev_centroids):
+            opacity = 1 / (len(self.prev_centroids) - i)
+            self.__plot_points(ax=ax, p=c, c=colors[np.arange(self.n_clusters)], marker='o', opacity=opacity)
         
         plt.show()
-        
 
     def cluster(self, plot_steps:bool = False):
         last_classes = copy(self.classes)
@@ -56,16 +56,17 @@ class Clustering:
                 
                 dists = [np.linalg.norm(p - c) for c in self.centroids]
                 self.classes[i] = np.argmin(dists)
-                
 
-            # Update step
+            # Update centroids
             for i in range(len(self.centroids)):
                 self.centroids[i] = np.mean(self.points[self.classes==i],axis=0)
 
+            # Plot the step
             if plot_steps:
-                print("here")
+                self.prev_centroids = np.append(self.prev_centroids,[copy(self.centroids)],axis=0)
                 self.__plot_step()
 
+            # Break the loop if the cluster assignment hasnt changed
             if np.array_equal(self.classes, last_classes):
                 break
             else:
