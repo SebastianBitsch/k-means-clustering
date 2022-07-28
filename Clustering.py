@@ -44,6 +44,8 @@ class Clustering:
 
         ax.set_xlim([0, self.bounds[0]])
         ax.set_ylim([0, self.bounds[1]])
+        ax.set_xticks([])
+        ax.set_yticks([])
         
         # Plot points and cluster centers
         self.__plot_points(ax=ax, p=self.points, c='black', marker='+')
@@ -59,6 +61,8 @@ class Clustering:
 
         ax.set_xlim([0, self.bounds[0]])
         ax.set_ylim([0, self.bounds[1]])
+        ax.set_xticks([])
+        ax.set_yticks([])
         
         # Plot points and cluster centers
         self.__plot_points(ax=ax, p=self.points, c=colors[self.classes], marker='+')
@@ -100,10 +104,6 @@ class Clustering:
                 dists = [np.linalg.norm(p - c) for c in self.centroids]
                 self.classes[i] = np.argmin(dists)
 
-            if plot_steps:
-                self.__plot_step(title="3: Assign points to closest cluster center")
-
-
             # Update centroid placements
             for i in range(len(self.centroids)):
                 class_points = self.points[self.classes==i]
@@ -115,7 +115,7 @@ class Clustering:
             # Plot the step
             if plot_steps:
                 self.prev_centroids = np.append(self.prev_centroids,[copy(self.centroids)],axis=0)
-                self.__plot_step(title="4: Move centroid center to the middle of the points")
+                self.__plot_step(title="3: Move centroid centers and update point assignments")
 
             # Break the loop if the cluster assignment hasnt changed
             if np.array_equal(self.classes, last_classes):
@@ -124,6 +124,6 @@ class Clustering:
                 last_classes = copy(self.classes)
 
         if plot_steps:
-            self.__plot_step(title="5: A stable configuration has been found")
+            self.__plot_step(title="4: A stable configuration has been found")
 
         return self.points, self.classes, self.centroids

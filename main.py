@@ -14,13 +14,14 @@ def multivariate_normal_points(N:int, mu:np.ndarray = [0.5,0.5], cov:np.ndarray 
     return np.random.multivariate_normal(mu, cov, N)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     
     n_clusters = 3
+    bounds = (15,15)
 
-    clouds = [generate_random_cloud() for _ in range(n_clusters)]
+    clouds = [generate_random_cloud(bounds) for _ in range(n_clusters)]
     points = np.vstack(clouds)
 
-    c = Clustering(points, n_clusters=n_clusters, bounds=(5,5))
+    c = Clustering(points, n_clusters=n_clusters, bounds=bounds)
 
     c.cluster(plot_steps=True)
