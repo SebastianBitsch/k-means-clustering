@@ -1,12 +1,26 @@
-from Clustering import Clustering, multivariate_normal_points
+from Clustering import Clustering
 import numpy as np
 
-if __name__ == "__main__":
 
-    # c = Clustering(N=500, n_clusters=3, bounds=(3,3))
-    p1 = multivariate_normal_points(100, mu=[2,2], cov=[[0.5,0.5],[0.5,0.5]])
-    p2 = multivariate_normal_points(100, mu=[3,0.5], cov=[[0.4,0],[0,0.09]])
-    p3 = multivariate_normal_points(100, mu=[1,4], cov=[[0.01,0],[0,0.05]])
-    points = np.vstack([p1,p2,p3])
-    c = Clustering(points, n_clusters=3, bounds=(5,5))
+def generate_random_cloud(bounds:tuple = (5,5)):
+    n = np.random.randint(20,100)
+    center = np.random.rand(2) * bounds
+    cov = np.random.rand(2,2)
+
+    return multivariate_normal_points(n, mu=center, cov=cov)
+
+
+def multivariate_normal_points(N:int, mu:np.ndarray = [0.5,0.5], cov:np.ndarray = [[0.01,0],[0,0.01]]):
+    return np.random.multivariate_normal(mu, cov, N)
+
+
+if __name__ == "__main__":
+    
+    n_clusters = 3
+
+    clouds = [generate_random_cloud() for _ in range(n_clusters)]
+    points = np.vstack(clouds)
+
+    c = Clustering(points, n_clusters=n_clusters, bounds=(5,5))
+
     c.cluster(plot_steps=True)

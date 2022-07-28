@@ -7,14 +7,11 @@ import numpy as np
 warnings.filterwarnings("ignore") # Hide a useless matplotlib warning
 
 # https://matplotlib.org/stable/gallery/color/named_colors.html
-colors = np.array(['dodgerblue', 'gold', 'crimson', 'forestgreen'])
+colors = np.array(['dodgerblue', 'gold', 'crimson', 'forestgreen', 'indigo', 'teal', 'orange', 'palevioletred'])
 
 
 def random_points(N:int, bounds:tuple = (1,1)) -> np.ndarray:
     return np.random.rand(N, 2) * bounds
-
-def multivariate_normal_points(N:int, mu:np.ndarray = [0.5,0.5], cov:np.ndarray = [[0.01,0],[0,0.01]]):
-    return np.random.multivariate_normal(mu, cov, N)
 
 def bound_points(points:np.ndarray, bounds:tuple = (1,1)):
     return points[np.logical_and(np.logical_and(0 < points[:,0], points[:,0] < bounds[0]), np.logical_and(0 < points[:,1], points[:,1] < bounds[1]))]
@@ -41,19 +38,25 @@ class Clustering:
         ax.scatter(x=p[:,0], y=p[:,1], facecolor=c, marker=marker, alpha=opacity, edgecolors='black', s=80)
     
     
-    def __plot_initial_setup(self, figsize:tuple = (8,8)):
-        fig, ax = plt.subplots(figsize=figsize)
+    def __plot_initial_setup(self, figsize:tuple = (7,7), show_cluster_centers:bool = False, title:str = ""):
+        _, ax = plt.subplots(figsize=figsize)
+        plt.title(title, loc='left', fontweight='bold')
+
         ax.set_xlim([0, self.bounds[0]])
         ax.set_ylim([0, self.bounds[1]])
         
         # Plot points and cluster centers
         self.__plot_points(ax=ax, p=self.points, c='black', marker='+')
-        self.__plot_points(ax=ax, p=self.centroids, c=colors[np.arange(len(self.centroids))], marker='o')
+        if show_cluster_centers:
+            self.__plot_points(ax=ax, p=self.centroids, c=colors[np.arange(len(self.centroids))], marker='o')
         plt.show()
 
 
-    def __plot_step(self, figsize:tuple = (8,8)):
-        fig, ax = plt.subplots(figsize=figsize)
+    def __plot_step(self, figsize:tuple = (7,7), title:str = ""):
+        _, ax = plt.subplots(figsize=figsize)
+        plt.title(title, loc='left', fontweight='bold')
+        
+
         ax.set_xlim([0, self.bounds[0]])
         ax.set_ylim([0, self.bounds[1]])
         
@@ -64,6 +67,14 @@ class Clustering:
         for i, c in enumerate(self.prev_centroids):
             opacity = 1 / (len(self.prev_centroids) - i)
             self.__plot_points(ax=ax, p=c, c=colors[np.arange(len(self.centroids))], marker='o', opacity=opacity)
+
+            if i+1 == len(self.prev_centroids):
+                continue
+
+            c1 = self.prev_centroids[i+1]
+            for j in range(len(self.centroids)):
+                ax.plot((c[j][0], c1[j][0]), (c[j][1], c1[j][1]), c='lightgray', alpha=1, zorder=-8)
+            
 
         # Plot lines from cluster to every point
         for i, p in enumerate(self.points):
@@ -78,7 +89,8 @@ class Clustering:
         last_classes = copy(self.classes)
 
         if plot_steps:
-            self.__plot_initial_setup()
+            self.__plot_initial_setup(show_cluster_centers=False, title="1: Initialize random points")
+            self.__plot_initial_setup(show_cluster_centers=True, title="2: Initialize random cluster centers")
 
         while True:
 
@@ -87,6 +99,10 @@ class Clustering:
                 
                 dists = [np.linalg.norm(p - c) for c in self.centroids]
                 self.classes[i] = np.argmin(dists)
+
+            if plot_steps:
+                self.__plot_step(title="3: Assign points to closest cluster center")
+
 
             # Update centroid placements
             for i in range(len(self.centroids)):
@@ -99,12 +115,15 @@ class Clustering:
             # Plot the step
             if plot_steps:
                 self.prev_centroids = np.append(self.prev_centroids,[copy(self.centroids)],axis=0)
-                self.__plot_step()
+                self.__plot_step(title="4: Move centroid center to the middle of the points")
 
             # Break the loop if the cluster assignment hasnt changed
             if np.array_equal(self.classes, last_classes):
                 break
             else:
                 last_classes = copy(self.classes)
+
+        if plot_steps:
+            self.__plot_step(title="5: A stable configuration has been found")
 
         return self.points, self.classes, self.centroids
