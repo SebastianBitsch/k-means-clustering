@@ -20,7 +20,7 @@ class Clustering:
         self.points = points
         self.N = len(self.points)
 
-        self.bounds = self.calculate_bounds(points)
+        self.bounds = self.__calculate_bounds(points)
 
         self.classes = np.zeros(self.N, dtype=int)
         
@@ -28,7 +28,8 @@ class Clustering:
         self.prev_centroids = np.array([copy(self.centroids)])
 
 
-    def calculate_bounds(self, points:np.ndarray) -> list:
+    def __calculate_bounds(self, points:np.ndarray) -> list:
+        """ Get the bounding box of the points, useful for plotting and initializing cluster centroids """
         min_x, min_y = np.min(points, axis=0)
         max_x, max_y = np.max(points, axis=0)
 
@@ -40,10 +41,30 @@ class Clustering:
         return bounds[0] + (np.random.rand(N, 2) * bounds[1])
 
 
-    def cluster(self):
+    def cluster(self, max_iter:int = 1000):
+        """
+        Attempt to cluster the given points
+
+        Parameters
+        ----------
+        max_iter, int
+            How many iterations to run before giving up
+
+        Returns
+        -------
+        points, np.ndarray
+            The points given
+        
+        self.classes, np.ndarray
+            The class index for every point
+        
+        self.centroids
+            The 2D coordinates of the centroid positions
+        """
         last_classes = copy(self.classes)
 
-        while True:
+        iter:int = 0
+        while iter < max_iter:
 
             # Assignment points the closest centroid
             for i, p in enumerate(self.points):
@@ -55,7 +76,7 @@ class Clustering:
             for i in range(len(self.centroids)):
                 class_points = self.points[self.classes==i]
 
-                # Guard against taking the mean of nothing in cases where a class has no points prescribed to it
+                # Guard against taking the mean of nothing in cases where a class has no points assigned to it
                 if 0 < len(class_points):
                     self.centroids[i] = np.mean(self.points[self.classes==i],axis=0)
                 
@@ -64,5 +85,6 @@ class Clustering:
                 break
             
             last_classes = copy(self.classes)
+            iter += 1
 
         return self.points, self.classes, self.centroids
