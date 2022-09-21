@@ -3,6 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def random_points(N:int, bounds:tuple = [(0,0),(1,1)]) -> np.ndarray:
+    """ Generate N random uniform points within a given set of bounds"""
+    return bounds[0] + (np.random.rand(N, 2) * bounds[1])
+
+
 def multivariate_normal_points(bounds:list[tuple] = [(0,0),(5,5)]) -> np.ndarray:
     N = np.random.randint(20,100)
     mu = bounds[0] + np.random.rand(2) * bounds[1]
@@ -22,6 +27,6 @@ if __name__ == "__main__":
     c = Clustering(points, n_clusters)
 
     points, classes, centroids = c.cluster()
-    plt.scatter(x=points[:,0],y=points[:,1],c=classes)
-    plt.scatter(x=centroids[:,0],y=centroids[:,1],c='black')
-    plt.show()    
+    plt.scatter(x=points[:,0],y=points[:,1],c=classes, cmap='Set1')
+    plt.scatter(x=centroids[:,0],y=centroids[:,1],c='black',marker='x')
+    plt.show()
