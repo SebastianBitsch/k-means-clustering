@@ -32,4 +32,5 @@ class RandomPartitionInitialization(InitializationMethod):
     cluster's randomly assigned points. 
     """
     def generate(self):
-        return np.array([np.mean(self.points[self.classes==i],axis=0) for i in range(self.n_clusters)])
+        classes = np.random.choice(range(self.n_clusters), len(self.points)) # TODO: should probably be set after/using the centroids
+        return np.array([np.mean(self.points[classes==i],axis=0) for i in range(self.n_clusters)])

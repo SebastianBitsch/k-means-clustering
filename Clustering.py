@@ -1,4 +1,3 @@
-from random import Random
 from InitializationMethods import InitializationMethod, ForgyInitialization, RandomPartitionInitialization
 
 from copy import copy
@@ -25,58 +24,71 @@ class Clustering:
         self.points = points
         self.N = len(self.points)
         
-        self.classes = np.random.choice(range(n_clusters), self.N)
+        self.classes = [None for _ in range(self.N)]#np.random.choice(range(n_clusters), self.N) # TODO: should probably be set after/using the centroids
         
-        self.centroids = init_method(self.points, self.classes, n_clusters).generate()
-        #self.centroids = np.array([np.mean(self.points[self.classes==i],axis=0) for i in range(n_clusters)])
-        self.prev_centroids = np.array(self.centroids)
+        self.init_method = init_method(self.points, self.classes, n_clusters)
 
 
-    def cluster(self, max_iter:int = 20):
+    def cluster(self, runs:int = 1, max_iter:int = 100):
         """
         Attempt to cluster the given points
 
         Parameters
         ----------
-        max_iter, int
-            How many iterations to run before giving up
+        runs, int = 1
+            How many times to run the algorithm in succession, classes for points are then voted on
+            More attempts help remove dependence on the initial clustering
+
+        max_iter, int = 100
+            The maximum number of iterations to complete before returning the clustering
 
         Returns
         -------
-        points, np.ndarray
-            The points given
-        
         classes, np.ndarray
             The class index for every point
         
         centroids
             The 2D coordinates of the centroid positions
         """
-        print(self.centroids)
-        last_classes = copy(self.classes)
 
-        iter:int = 0
-        while iter < max_iter:
+        classes_total = []
+        centroids_total = []
+
+        for i in range(runs):
+            # Generate new init conditions
+            centroids = self.init_method.generate()
+            classes, centroids = self._run_clustering_single(self.points, centroids, max_iter=max_iter)
+            
+            classes_total.append(classes)
+            centroids_total.append(centroids)
+
+        # Do voting - one problem is that [1,1,2,2] should be the same as [2,2,1,1]
+        # np.argmax(np.bincount(total_classes[:,0])) - to find most comment element in array
+
+        return classes, centroids
+
+    def _run_clustering_single(self, points:np.ndarray, centroids:np.ndarray, max_iter:int):
+    
+        classes = np.full(self.N, None)
+        last_classes = np.full(self.N, None)
+
+        iteration:int = 0
+        while iteration < max_iter:
 
             # Assignment points the closest centroid
-            for i, p in enumerate(self.points):
-                
-                dists = [np.linalg.norm(p - c) for c in self.centroids]
-                self.classes[i] = np.argmin(dists)
+            for i, p in enumerate(points):                
+                dists = [np.linalg.norm(p - c) for c in centroids]
+                classes[i] = np.argmin(dists)
 
             # Update centroid placements
-            for i in range(len(self.centroids)):
-                class_points = self.points[self.classes==i]
+            for i in range(len(centroids)):
+                centroids[i] = np.mean(points[classes==i],axis=0)
 
-                # Guard against taking the mean of nothing in cases where a class has no points assigned to it
-                if 0 < len(class_points):
-                    self.centroids[i] = np.mean(self.points[self.classes==i],axis=0)
-                
             # Break the loop if the cluster assignment hasnt changed
-            if np.array_equal(self.classes, last_classes):
+            if np.array_equal(classes, last_classes):
                 break
             
-            last_classes = copy(self.classes)
-            iter += 1
+            last_classes = copy(classes)
+            iteration += 1
 
-        return self.points, self.classes, self.centroids
+        return classes, centroids

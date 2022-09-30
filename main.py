@@ -18,15 +18,17 @@ def multivariate_normal_points(bounds:list[tuple] = [(0,0),(5,5)], n_points_rang
 
 if __name__ == "__main__":  
     
+    # Generate points
     n_clusters = 3
     bounds = [(0,0),(15,15)]
-    
     clouds = [multivariate_normal_points(bounds) for _ in range(n_clusters)]
     points = np.vstack(clouds)
 
+    # Cluster points
     c = Clustering(points, n_clusters)
+    classes, centroids = c.cluster(runs=1)
 
-    points, classes, centroids = c.cluster()
-    plt.scatter(x=points[:,0],y=points[:,1],c=classes, cmap='Set1')
+    # Plot result
+    plt.scatter(x=c.points[:,0],y=c.points[:,1],c=classes, cmap='Set1')
     plt.scatter(x=centroids[:,0],y=centroids[:,1],c='black',marker='x')
     plt.show()
