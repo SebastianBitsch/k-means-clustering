@@ -1,31 +1,14 @@
-from abc import ABC, abstractmethod
+from random import Random
+from InitializationMethods import InitializationMethod, ForgyInitialization, RandomPartitionInitialization
+
 from copy import copy
-import enum
+
 import numpy as np
 
 
-class InitializationMethod(ABC):
-    def __init__(self, points:np.ndarray, classes:np.ndarray, n_clusters:int) -> None:
-        self.points = points
-        self.classes = classes
-        self.n_clusters = n_clusters
-
-    @abstractmethod
-    def generate():
-        pass
-
-class ForgyInitialization(InitializationMethod):
-    def generate(self):
-        indices = np.random.choice(self.points.shape[0], self.n_clusters)
-        return self.points[indices]
-
-class RandomPartitionInitialization(InitializationMethod):
-    def generate(self):
-        return np.array([np.mean(self.points[self.classes==i],axis=0) for i in range(self.n_clusters)])
-
 class Clustering:
 
-    def __init__(self, points:np.ndarray, n_clusters:int = 2, init_method:InitializationMethod = ForgyInitialization) -> None:
+    def __init__(self, points:np.ndarray, n_clusters:int = 2, init_method:InitializationMethod = RandomPartitionInitialization) -> None:
         """
         A class for clustering a set of points into K different clusters based on their proximity
 
@@ -95,6 +78,5 @@ class Clustering:
             
             last_classes = copy(self.classes)
             iter += 1
-            print(iter)
 
         return self.points, self.classes, self.centroids
