@@ -1,27 +1,31 @@
+from abc import ABC, abstractmethod
 from copy import copy
 import enum
 import numpy as np
 
-class InitializationMethod:
-    centroids = None
 
-    def __init__(self) -> None:
+class InitializationMethod(ABC):
+    def __init__(self, points:np.ndarray, classes:np.ndarray, n_clusters:int) -> None:
+        self.points = points
+        self.classes = classes
+        self.n_clusters = n_clusters
+
+    @abstractmethod
+    def generate():
         pass
 
-
 class ForgyInitialization(InitializationMethod):
-    def __init__(self, points:np.ndarray, n_clusters:int) -> None:
-        self.centroids = np.random.choice(points, n_clusters)
-        super().__init__()
+    def generate(self):
+        indices = np.random.choice(self.points.shape[0], self.n_clusters)
+        return self.points[indices]
 
 class RandomPartitionInitialization(InitializationMethod):
-    def __init__(self, points:np.ndarray, classes:np.ndarray, n_clusters:int) -> None:
-        self.centroids = np.array([np.mean(points[classes==i],axis=0) for i in range(n_clusters)])
-        super().__init__()
+    def generate(self):
+        return np.array([np.mean(self.points[self.classes==i],axis=0) for i in range(self.n_clusters)])
 
 class Clustering:
 
-    def __init__(self, points:np.ndarray, n_clusters:int = 2) -> None:
+    def __init__(self, points:np.ndarray, n_clusters:int = 2, init_method:InitializationMethod = ForgyInitialization) -> None:
         """
         A class for clustering a set of points into K different clusters based on their proximity
 
@@ -40,10 +44,9 @@ class Clustering:
         
         self.classes = np.random.choice(range(n_clusters), self.N)
         
-        self.centroids = np.array([np.mean(self.points[self.classes==i],axis=0) for i in range(n_clusters)])
+        self.centroids = init_method(self.points, self.classes, n_clusters).generate()
+        #self.centroids = np.array([np.mean(self.points[self.classes==i],axis=0) for i in range(n_clusters)])
         self.prev_centroids = np.array(self.centroids)
-
-
 
 
     def cluster(self, max_iter:int = 20):
@@ -66,6 +69,7 @@ class Clustering:
         centroids
             The 2D coordinates of the centroid positions
         """
+        print(self.centroids)
         last_classes = copy(self.classes)
 
         iter:int = 0
